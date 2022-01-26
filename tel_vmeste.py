@@ -1,6 +1,7 @@
 import logging
 import keys
 
+# Add the necessary modules
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
@@ -11,7 +12,18 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+"""The stuff we need for the bot to operate it, above. Sorry IDK"""
 
+
+# First we add the functions that we want to have in our program
+
+"""this is start function. 
+Update module retrieves the data from telegram, such as messages
+and other. As you see, we can access to different type of information 
+using different attriburtes such as effective_user.first_name
+
+CallbackContext is responsible for attaching functions to the commands
+user inputs in the telegram"""
 def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Hello, {}!'.format(update.effective_user.first_name))
 
@@ -30,22 +42,26 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    """Start the bot."""
-    # Create the Updater and pass it your bot's token.
+  # Start of the bot
+  
+  # Here goes the TOKEN of our Bot
     updater = Updater(key)
 
-    # Get the dispatcher to register handlers
+    # This allow to call functions we wrote above
     dispatcher = updater.dispatcher
 
-    # on different commands - answer in Telegram
+    # methods call different functions we wrote above. First goes the command line, 
+    # and then the function.
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help_command))
     dispatcher.add_handler(CommandHandler("getID", get_userID))
 
-    # on non command i.e message - echo the message on Telegram
+    # this handler takes any message and repeats it, doesn't read commands
+    # Filters used to select particular types of data (such as, text, video, photo, commands)
+    # Here `~` sign means does not read
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
-    # Start the Bot
+    # checks for the incoming messages
     updater.start_polling()
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
