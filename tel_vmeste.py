@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 NAME, SEX, PHOTO = range(3)
 POINT_A, POINT_B, ADD_PERSON, PERSON_COUNT= range(4)
 
-user_db = Class_user
+user_db = Class_user.sql_class
 new_user = {}
 
-new_variable = 230
 """INITIATE REGISTRATION"""
 
 
@@ -57,6 +56,7 @@ def sex(update: Update, context: CallbackContext) -> int:
 def skip_photo(update: Update, context: CallbackContext) -> int:
     logger.info("User %s did not send a photo.", update.message.from_user.name)
     new_user['photo'] = 0
+    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), str(new_user['photo']))
     
     update.message.reply_text(
         'I bet you look great!\nDone! Now you can travel with others!\nType /ride to find a partner.')
@@ -67,7 +67,7 @@ def photo(update: Update, context: CallbackContext) -> int:
 
     logger.info("Photo of %s: %s", update.message.from_user.name, 'user_photo.jpg')
     new_user['photo'] = 1
-    user_db.add_user(new_user['id'], new_user['name'], new_user['sex'], new_user['photo'])
+    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), str(new_user['photo']))
 
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
@@ -144,7 +144,7 @@ def ride_cancel(update: Update, context: CallbackContext) -> int:
 
 """GET BIO"""
 def get_bio(update: Update, context: CallbackContext) -> None:
-    name, sex, photo = user_db.name, user_db.sex, user_db.has_photo
+    name, sex, photo = user_db.find_name, user_db.find_sex, user_db.has_photo
 
     if photo == True:
         file = '{}_photo.jpg'.format(name)

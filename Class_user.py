@@ -11,7 +11,7 @@ from parse import *
 
 class sql_class():
     
-    conn = sqlite3.connect('vmeste.db')
+    conn = sqlite3.connect('vmeste.db', check_same_thread=False)
     c = conn.cursor()
     
     @classmethod # int, str, str, int
@@ -56,11 +56,3 @@ class sql_class():
         SET name = ?, sex = ?, photo = ? 
         where id = {}""".format(user_id), (new_name, new_sex, new_photo))
         cls.conn.commit()
-
-# class User(sql_class):
-#     sql = sql_class
-
-#     def __init__(self, user_id) -> None:
-#         self.user_id = user_id
-#         self.name = self.sql.find_name(user_id)
-#         self.sex = self.sql.find_sex(user_id)
