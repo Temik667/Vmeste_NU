@@ -57,10 +57,10 @@ class sql_class():
         where id = {}""".format(user_id), (new_name, new_sex, new_photo))
         cls.conn.commit()
 
-class User(sql_class):
-    sql = sql_class
+# class User(sql_class):
+#     sql = sql_class
 
-    def __init__(self, user_id) -> None:
-        self.user_id = user_id
-        self.name = self.sql.find_name(user_id)
-        self.sex = self.sql.find_sex(user_id)
+#     def __init__(self, user_id) -> None:
+#         self.user_id = user_id
+#         self.name = self.sql.find_name(user_id)
+#         self.sex = self.sql.find_sex(user_id)

@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 NAME, SEX, PHOTO = range(3)
 POINT_A, POINT_B, ADD_PERSON, PERSON_COUNT= range(4)
 
-user_db = Class_user.User
+user_db = Class_user
 new_user = {}
 
+aslaan = 'loh'
 """INITIATE REGISTRATION"""
 
 
@@ -67,6 +68,7 @@ def photo(update: Update, context: CallbackContext) -> int:
     logger.info("Photo of %s: %s", update.message.from_user.name, 'user_photo.jpg')
     new_user['photo'] = 1
     user_db.add_user(new_user['id'], new_user['name'], new_user['sex'], new_user['photo'])
+
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
 
@@ -74,6 +76,7 @@ def registration_cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         'Registration calceled', reply_markup=ReplyKeyboardRemove()
     )
+    new_user.clear()
 
     return ConversationHandler.END
 
