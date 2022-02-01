@@ -56,7 +56,8 @@ def sex(update: Update, context: CallbackContext) -> int:
 def skip_photo(update: Update, context: CallbackContext) -> int:
     logger.info("User %s did not send a photo.", update.message.from_user.name)
     new_user['photo'] = 0
-    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), str(new_user['photo']))
+    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), int(new_user['photo']))
+    new_user.clear()
     
     update.message.reply_text(
         'I bet you look great!\nDone! Now you can travel with others!\nType /ride to find a partner.')
@@ -67,7 +68,8 @@ def photo(update: Update, context: CallbackContext) -> int:
 
     logger.info("Photo of %s: %s", update.message.from_user.name, 'user_photo.jpg')
     new_user['photo'] = 1
-    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), str(new_user['photo']))
+    user_db.add_user(int(new_user['id']), str(new_user['name']), str(new_user['sex']), int(new_user['photo']))
+    new_user.clear()
 
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
@@ -127,14 +129,6 @@ def person_count(update: Update, context: CallbackContext) -> int:
 
     return ConversationHandler.END
 
-def start(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-    if user_db.is_new(user_id) == True:
-        update.message.reply_text('Hello! I see that you are a new rider!\nPlease /register !')
-    else:
-        update.message.reply_text('Hello, {}!\nVmeste bot is dedicated for cooperative ride on taxis.\nPlease use the following commands:\n/help - to get info about commands\n/register - to register\n/ride - to get a ride!'.format(update.effective_user.first_name))
-
-
 def ride_cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         'Ride calceled', reply_markup=ReplyKeyboardRemove()
@@ -149,9 +143,19 @@ def get_bio(update: Update, context: CallbackContext) -> None:
     if photo == True:
         file = '{}_photo.jpg'.format(name)
         telegram.Bot.send_photo(update.effective_chat.id, filename = file)
+        update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
     else:
         update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\nPhoto: None'.format(name, sex))
-    update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
+
+"""START"""
+def start(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+
+    if user_db.is_new(user_id) == True:
+        update.message.reply_text('Hello! I see that you are a new rider!\nPlease /register !')
+    else:
+        update.message.reply_text('Hello, {}!\nVmeste bot is dedicated for cooperative ride on taxis.\nPlease use the following commands:\n/help - to get info about commands\n/register - to register\n/ride - to get a ride!'.format(update.effective_user.first_name))
+
 
 
 def main() -> None:

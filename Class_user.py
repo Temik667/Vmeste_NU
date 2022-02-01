@@ -13,6 +13,9 @@ class sql_class():
     
     conn = sqlite3.connect('vmeste.db', check_same_thread=False)
     c = conn.cursor()
+
+    @classmethod
+    def close_db():
     
     @classmethod # int, str, str, int
     def add_user(cls, new_user_id, new_name, new_sex, new_photo) -> None:
@@ -39,7 +42,7 @@ class sql_class():
         cls.c.execute("""SELECT photo FROM vmeste WHERE id = {}""".format(str(user_id)))
         photo = str(cls.c.fetchone())
         r = parse("({},)", photo)
-        if r[0] == '1':
+        if r[0] == '0':
             return False
         return True
 
@@ -48,7 +51,8 @@ class sql_class():
         cls.c.execute("""SELECT id FROM vmeste WHERE id = {}""".format(str(user_id)))
         result = str(cls.c.fetchone())
         if result == 'None':
-            return False
+            return True
+        return True
     
     @classmethod
     def update_info(cls, user_id, new_name, new_sex, new_photo) -> None:
