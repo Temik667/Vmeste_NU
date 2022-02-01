@@ -53,8 +53,22 @@ class sql_class():
             return False
     
     @classmethod
-    def update_info(cls, user_id, new_name, new_sex, new_photo) -> None:
+    def update_name(cls, user_id, new_name) -> None:
         cls.c.execute("""UPDATE vmeste 
-        SET name = ?, sex = ?, photo = ? 
-        where id = {}""".format(user_id), (new_name, new_sex, new_photo))
+        SET name = (?)
+        where id = (?)""", (new_name, user_id))
+        cls.conn.commit()
+    
+    @classmethod
+    def update_sex(cls, user_id, new_sex) -> None:
+        cls.c.execute("""UPDATE vmeste 
+        SET sex = (?)
+        where id = (?)""", (new_sex, user_id))
+        cls.conn.commit()
+
+    @classmethod
+    def update_photo(cls, user_id, new_photo) -> None:
+        cls.c.execute("""UPDATE vmeste 
+        SET photo = (?)
+        where id = (?)""", (new_photo, user_id))
         cls.conn.commit()

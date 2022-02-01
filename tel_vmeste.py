@@ -1,13 +1,18 @@
+from fileinput import filename
 import logging
-from turtle import update
+from turtle import st
 
 import telegram
 import keys
 import Class_user
+from parse import *
+import os
+
 from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ConversationHandler
 
 key = keys.API_KEY
+bot = telegram.Bot(token = key)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -67,7 +72,6 @@ def skip_photo(update: Update, context: CallbackContext) -> int:
     
     update.message.reply_text(
         'I bet you look great!\nDone! Now you can travel with others!\nType /ride to find a partner.')
-
     return ConversationHandler.END
 
 def photo(update: Update, context: CallbackContext) -> int:
@@ -81,8 +85,7 @@ def photo(update: Update, context: CallbackContext) -> int:
 
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
-    
-    return ConversationHandler.END
+    return ConversationHandler.END    
 
 def registration_cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
@@ -149,17 +152,16 @@ def ride_cancel(update: Update, context: CallbackContext) -> int:
 """GET BIO"""
 def get_bio(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-
     if user_db.is_new(user_id) == True:
         update.message.reply_text('You are not registered yet!\nPlease /register')
         return
 
     name = user_db.find_name(user_id)
     sex =  user_db.find_sex(user_id)
-    photo = user_db.has_photo(user_id)
-    if photo == True:
+    has_photo = user_db.has_photo(user_id)
+    if has_photo == True:
         file = '{}_photo.jpg'.format(user_id)
-        telegram.Bot.send_photo(update.effective_chat.id, filename = file)
+        bot.send_photo(update.effective_chat.id, photo = open(file, 'rb'), filename = file)
         update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
     else:
         update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\nPhoto: None'.format(name, sex))
@@ -171,25 +173,78 @@ def start(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text('Hello, {}!\nVmeste bot is dedicated for cooperative ride on taxis.\nPlease use the following commands:\n/help - to get info about commands\n/register - to register\n/ride - to get a ride!'.format(update.effective_user.first_name))
 
-"""CHANGE"""
-def update_bio(update: Update, context: CallbackContext) -> int:
-    user_id = update.message.from_user.id
-    name = user_db.find_name(user_id)
-    sex =  user_db.find_sex(user_id)
-    photo = user_db.has_photo(user_id)
-    
-    if photo == True:
-        file = '{}_photo.jpg'.format(user_id)
-        telegram.Bot.send_photo(update.effective_chat.id, filename = file)
-        update.message.reply_text('!!!Your Current Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
-    else:
-        update.message.reply_text('!!!Your Current Bio!!!\nName: {}\nSex: {}\nPhoto: None'.format(name, sex))
-    
-    update.message.reply_text('Enter your new Name(or reenter old one):')
 
+"""UPDATE"""
+        
+def update_name(update: Update, context: CallbackContext) -> int:
+    get_bio(update, context)
+    update.message.reply_text('Your new name(or old one):\n/cancel for cancel')
     return NAME
 
-# def update_name(update: Update, context: CallbackContext) -> int:
+def update_name_func(update: Update, context: CallbackContext) -> int:
+    logger.info("Updated name of %s: %s", update.message.from_user.name, update.message.text)
+    name = update.message.text
+    user_db.update_name(update.message.from_user.id, name)
+    update.message.reply_text('Updated name! Now you are more yourself than you were ever before!')
+    return ConversationHandler.END
+
+
+def update_sex(update:Update, context: CallbackContext) -> int:
+    get_bio(update, context)
+    reply_keyboard = [['Male', 'Female']]
+
+    update.message.reply_text(
+        'Your new sex(or old one):\n/cancel for cancel',
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder='Male/Female?'
+        ),
+    )
+    return SEX
+
+def update_sex_func(update: Update, context: CallbackContext) -> int:
+    logger.info("Updated sex of %s: %s", update.message.from_user.name, update.message.text)
+    sex = update.message.text
+    user_db.update_sex(update.message.from_user.id, sex)
+    update.message.reply_text('Updated sex! Now you are more yourself than you were ever before!', 
+    reply_markup=ReplyKeyboardRemove())
+    return ConversationHandler.END
+
+def update_photo(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text('Upload a photo(or to delete current one /delete_photo\n/cancel for cancel')
+    return PHOTO
+
+def update_photo_func(update:Update, contex: CallbackContext) -> int:
+    text = 'Updated Photo! Indeed, you are a human, not a robot!'
+    if user_db.has_photo(update.message.from_user.id) == True:
+        os.remove('{}_photo.jpg'.format(update.message.from_user.id))
+        text = 'Updated Photo! You are nicer on this one!'
+    
+    user_db.update_photo(update.message.from_user.id, 1)
+    logger.info("Removed photo of %s: %s", update.message.from_user.name, 'user_photo.jpg')
+    
+    photo_file = update.message.photo[-1].get_file()
+    photo_file.download('{}_photo.jpg'.format(update.message.from_user.id))
+
+    logger.info("Updated photo of %s: %s", update.message.from_user.name, 'user_photo.jpg')
+    
+    
+    update.message.reply_text(text)
+    return ConversationHandler.END 
+
+def delete_photo(update: Update, context: CallbackContext) -> int:
+    if user_db.has_photo(update.message.from_user.id) == False:
+        update.message.reply_text('You do not have photo to delete.')
+        return ConversationHandler.END
+    logger.info("User %s deleted photo", update.message.from_user.name)
+    os.remove('{}_photo.jpg'.format(update.message.from_user.id))
+    
+    user_db.update_photo(update.message.from_user.id, 0)
+    update.message.reply_text('Photo deleted!')
+    return ConversationHandler.END
+
+def update_cancel(update:Update, context: CallbackContext) -> int:
+    update.message.reply_text('Update canceled')
+    return ConversationHandler.END
 
 
 def main() -> None:
@@ -218,17 +273,36 @@ def main() -> None:
         fallbacks=[CommandHandler('cancel', ride_cancel)]
     )
 
-    # change_conv = ConversationHandler(
-    #     entry_points=[CommandHandler("update_bio", update_bio)],
-    #     states={
-    #         NAME: [MessageHandler(Filters.text, update_name)],
-    #         SEX: [MessageHandler(Filters.text, update_sex)],
-    #         PHOTO: [MessageHandler(Filters.text, update_photo), CommandHandler()]
-    #     }
-    # )
+    update_name_conv=ConversationHandler(
+        entry_points=[CommandHandler("update_name", update_name)],
+        states={
+            NAME: [MessageHandler(Filters.text, update_name_func)]
+        },
+        fallbacks=[CommandHandler('cancel', update_cancel)],
+    )
 
+    update_sex_conv=ConversationHandler(
+        entry_points=[CommandHandler("update_sex", update_sex)],
+        states={
+            SEX: [MessageHandler(Filters.regex('^(Male|Female)$'), update_sex_func)]
+        },
+        fallbacks=[CommandHandler('cancel', update_cancel)],
+    )
+
+    update_photo_conv=ConversationHandler(
+        entry_points=[CommandHandler("update_photo", update_photo)],
+        states={
+            PHOTO: [MessageHandler((Filters.photo), update_photo_func), CommandHandler("delete_photo", delete_photo)]
+        },
+        fallbacks=[CommandHandler('cancel', update_cancel)]
+    )
+   
+   
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("bio", get_bio))
+    dispatcher.add_handler(update_name_conv)
+    dispatcher.add_handler(update_sex_conv)
+    dispatcher.add_handler(update_photo_conv)
     dispatcher.add_handler(register_conv)
     dispatcher.add_handler(ride_conv)
 
