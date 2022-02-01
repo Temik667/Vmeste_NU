@@ -1,7 +1,6 @@
 import string
 import os
 import sqlite3
-from aem import con
 from parse import *
 
 #         TABLE:
@@ -50,7 +49,8 @@ class sql_class():
         result = str(cls.c.fetchone())
         if result == 'None':
             return True
-        return False
+        else:
+            return False
     
     @classmethod
     def update_info(cls, user_id, new_name, new_sex, new_photo) -> None:

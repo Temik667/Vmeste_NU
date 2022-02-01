@@ -25,7 +25,7 @@ new_user = {}
 
 
 def register(update: Update, context: CallbackContext) -> int:
-    user_id = user_db.is_new(update.message.from_user.id)
+    user_id = update.message.from_user.id
     if user_db.is_new(user_id) == False:
         update.message.reply_text('You are not a new user!\n')
         ConversationHandler.END
