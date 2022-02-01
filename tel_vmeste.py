@@ -67,6 +67,7 @@ def skip_photo(update: Update, context: CallbackContext) -> int:
     
     update.message.reply_text(
         'I bet you look great!\nDone! Now you can travel with others!\nType /ride to find a partner.')
+    return ConversationHandler.END
 
 def photo(update: Update, context: CallbackContext) -> int:
     photo_file = update.message.photo[-1].get_file()
@@ -79,6 +80,7 @@ def photo(update: Update, context: CallbackContext) -> int:
 
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
+    return ConversationHandler.END    
 
 def registration_cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
@@ -145,7 +147,7 @@ def ride_cancel(update: Update, context: CallbackContext) -> int:
 """GET BIO"""
 def get_bio(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    if user_db.is_new(update.message.from_user.id) == True:
+    if user_db.is_new(user_id) == True:
         update.message.reply_text('You are not registered yet!\nPlease /register')
         return
 
@@ -153,7 +155,7 @@ def get_bio(update: Update, context: CallbackContext) -> None:
     sex =  user_db.find_sex(user_id)
     photo = user_db.has_photo(user_id)
     if photo == True:
-        file = '{}_photo.jpg'.format(name)
+        file = '{}_photo.jpg'.format(user_id)
         telegram.Bot.send_photo(update.effective_chat.id, filename = file)
         update.message.reply_text('!!!Your Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
     else:
