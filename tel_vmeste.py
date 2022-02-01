@@ -1,5 +1,5 @@
-from dis import dis
 import logging
+from turtle import update
 
 import telegram
 import keys
@@ -67,6 +67,7 @@ def skip_photo(update: Update, context: CallbackContext) -> int:
     
     update.message.reply_text(
         'I bet you look great!\nDone! Now you can travel with others!\nType /ride to find a partner.')
+
     return ConversationHandler.END
 
 def photo(update: Update, context: CallbackContext) -> int:
@@ -80,7 +81,8 @@ def photo(update: Update, context: CallbackContext) -> int:
 
     update.message.reply_text(
         'Done! Now you can travel with others!\nType /ride to find a partner.')
-    return ConversationHandler.END    
+    
+    return ConversationHandler.END
 
 def registration_cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
@@ -147,6 +149,7 @@ def ride_cancel(update: Update, context: CallbackContext) -> int:
 """GET BIO"""
 def get_bio(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
+
     if user_db.is_new(user_id) == True:
         update.message.reply_text('You are not registered yet!\nPlease /register')
         return
@@ -168,6 +171,25 @@ def start(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text('Hello, {}!\nVmeste bot is dedicated for cooperative ride on taxis.\nPlease use the following commands:\n/help - to get info about commands\n/register - to register\n/ride - to get a ride!'.format(update.effective_user.first_name))
 
+"""CHANGE"""
+def update_bio(update: Update, context: CallbackContext) -> int:
+    user_id = update.message.from_user.id
+    name = user_db.find_name(user_id)
+    sex =  user_db.find_sex(user_id)
+    photo = user_db.has_photo(user_id)
+    
+    if photo == True:
+        file = '{}_photo.jpg'.format(user_id)
+        telegram.Bot.send_photo(update.effective_chat.id, filename = file)
+        update.message.reply_text('!!!Your Current Bio!!!\nName: {}\nSex: {}\n'.format(name, sex))
+    else:
+        update.message.reply_text('!!!Your Current Bio!!!\nName: {}\nSex: {}\nPhoto: None'.format(name, sex))
+    
+    update.message.reply_text('Enter your new Name(or reenter old one):')
+
+    return NAME
+
+# def update_name(update: Update, context: CallbackContext) -> int:
 
 
 def main() -> None:
@@ -195,6 +217,15 @@ def main() -> None:
         },
         fallbacks=[CommandHandler('cancel', ride_cancel)]
     )
+
+    # change_conv = ConversationHandler(
+    #     entry_points=[CommandHandler("update_bio", update_bio)],
+    #     states={
+    #         NAME: [MessageHandler(Filters.text, update_name)],
+    #         SEX: [MessageHandler(Filters.text, update_sex)],
+    #         PHOTO: [MessageHandler(Filters.text, update_photo), CommandHandler()]
+    #     }
+    # )
 
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("bio", get_bio))
