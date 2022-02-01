@@ -21,7 +21,6 @@ POINT_A, POINT_B, ADD_PERSON, PERSON_COUNT= range(4)
 user_db = Class_user
 new_user = {}
 
-aslaan = 'loh'
 """INITIATE REGISTRATION"""
 
 
