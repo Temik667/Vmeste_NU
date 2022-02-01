@@ -25,6 +25,12 @@ new_user = {}
 
 
 def register(update: Update, context: CallbackContext) -> int:
+    user_id = user_db.is_new(update.message.from_user.id)
+    if user_db.is_new(user_id) == False:
+        update.message.reply_text('You are not a new user!\n')
+        ConversationHandler.END
+        return
+        
     update.message.reply_text('!!!REGISTER!!!\nYour name:')
     new_user['id'] = int(update.message.from_user.id)
     return NAME
@@ -138,8 +144,14 @@ def ride_cancel(update: Update, context: CallbackContext) -> int:
 
 """GET BIO"""
 def get_bio(update: Update, context: CallbackContext) -> None:
-    name, sex, photo = user_db.find_name, user_db.find_sex, user_db.has_photo
+    user_id = update.message.from_user.id
+    if user_db.is_new(update.message.from_user.id) == True:
+        update.message.reply_text('You are not registered yet!\nPlease /register')
+        return
 
+    name = user_db.find_name(user_id)
+    sex =  user_db.find_sex(user_id)
+    photo = user_db.has_photo(user_id)
     if photo == True:
         file = '{}_photo.jpg'.format(name)
         telegram.Bot.send_photo(update.effective_chat.id, filename = file)
@@ -149,9 +161,7 @@ def get_bio(update: Update, context: CallbackContext) -> None:
 
 """START"""
 def start(update: Update, context: CallbackContext) -> None:
-    user_id = update.message.from_user.id
-
-    if user_db.is_new(user_id) == True:
+    if user_db.is_new(update.message.from_user.id) == True:
         update.message.reply_text('Hello! I see that you are a new rider!\nPlease /register !')
     else:
         update.message.reply_text('Hello, {}!\nVmeste bot is dedicated for cooperative ride on taxis.\nPlease use the following commands:\n/help - to get info about commands\n/register - to register\n/ride - to get a ride!'.format(update.effective_user.first_name))

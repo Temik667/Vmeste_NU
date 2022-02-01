@@ -1,6 +1,7 @@
 import string
 import os
 import sqlite3
+from aem import con
 from parse import *
 
 #         TABLE:
@@ -14,9 +15,6 @@ class sql_class():
     conn = sqlite3.connect('vmeste.db', check_same_thread=False)
     c = conn.cursor()
 
-    @classmethod
-    def close_db():
-    
     @classmethod # int, str, str, int
     def add_user(cls, new_user_id, new_name, new_sex, new_photo) -> None:
         parameters = new_user_id, new_name, new_sex, new_photo
@@ -52,7 +50,7 @@ class sql_class():
         result = str(cls.c.fetchone())
         if result == 'None':
             return True
-        return True
+        return False
     
     @classmethod
     def update_info(cls, user_id, new_name, new_sex, new_photo) -> None:
