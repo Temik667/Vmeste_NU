@@ -1,23 +1,35 @@
 import string
-import os
 import sqlite3
 from parse import *
 
-#         TABLE:
+# conn = sqlite3.connect('vmeste.db')
+# c = conn.cursor()
+# c.execute("""CREATE TABLE vmeste (
 #         id INTEGER,
 #         name TEXT,
 #         sex TEXT,
-#         photo BIT
+#         photo BIT,
+#         first_fail INTEGER,
+#         second_fail INTEGER
+# )""")
+
+# conn.commit()
+# c.close()
 
 class sql_class():
     
     conn = sqlite3.connect('vmeste.db', check_same_thread=False)
     c = conn.cursor()
 
-    @classmethod # int, str, str, int
+    @classmethod 
     def add_user(cls, new_user_id, new_name, new_sex, new_photo) -> None:
-        parameters = new_user_id, new_name, new_sex, new_photo
-        cls.c.execute("""INSERT INTO vmeste VALUES (?, ?, ?, ?)""", parameters)
+        parameters = new_user_id, new_name, new_sex, new_photo, 0, 0
+        cls.c.execute("""INSERT INTO vmeste VALUES (?, ?, ?, ?, ?, ?)""", parameters)
+        cls.conn.commit()
+
+    @classmethod
+    def delete_user(cls, user_id) -> None:
+        cls.c.execute("""DELETE FROM vmeste WHERE id = {}""".format(user_id))
         cls.conn.commit()
 
     @classmethod
@@ -42,6 +54,29 @@ class sql_class():
         if r[0] == '0':
             return False
         return True
+    
+    @classmethod
+    def find_rides(cls, user_id) -> int:
+        cls.c.execute("""SELECT rides FROM vmeste WHERE id = {}""".format(str(user_id)))
+        rides = str(cls.c.fetchone())
+        r = parse("({},)", rides)
+        return int(r[0])
+    
+    @classmethod
+    def find_first_fail(cls, user_id) -> int:
+        cls.c.execute("""SELECT first_fail FROM vmeste
+        WHERE id = {}""".format(user_id))
+        result = str(cls.c.fetchone())
+        r = parse("({},)", result)
+        return int(r[0])
+    
+    @classmethod
+    def find_second_fail(cls, user_id) -> int:
+        cls.c.execute("""SELECT second_fail FROM vmeste
+        WHERE id = {}""".format(user_id))
+        result = str(cls.c.fetchone())
+        r = parse("({},)", result)
+        return int(r[0])
 
     @classmethod
     def is_new(cls, user_id) -> bool:
@@ -56,19 +91,45 @@ class sql_class():
     def update_name(cls, user_id, new_name) -> None:
         cls.c.execute("""UPDATE vmeste 
         SET name = (?)
-        where id = (?)""", (new_name, user_id))
+        WHERE id = (?)""", (new_name, user_id))
         cls.conn.commit()
     
     @classmethod
     def update_sex(cls, user_id, new_sex) -> None:
         cls.c.execute("""UPDATE vmeste 
         SET sex = (?)
-        where id = (?)""", (new_sex, user_id))
+        WHERE id = (?)""", (new_sex, user_id))
         cls.conn.commit()
 
     @classmethod
     def update_photo(cls, user_id, new_photo) -> None:
         cls.c.execute("""UPDATE vmeste 
         SET photo = (?)
-        where id = (?)""", (new_photo, user_id))
+        WHERE id = (?)""", (new_photo, user_id))
+        cls.conn.commit()
+        
+    @classmethod
+    def add_fail(cls, user_id) -> None:
+        if cls.find_first_fail(user_id) == 1:
+            cls.c.execute("""UPDATE vmeste
+            SET second_fail = (?)
+            WHERE id = (?)""", (1, user_id))
+            cls.conn.commit()
+            return
+        cls.c.execute("""UPDATE vmeste
+            SET first_fail = (?)
+            WHERE id = (?)""", (1, user_id))
+        cls.conn.commit()
+    
+    @classmethod
+    def remove_fail(cls, user_id) -> None:
+        if cls.find_second_fail(user_id) == 1:
+            cls.c.execute("""UPDATE vmeste
+            SET second_fail = (?)
+            WHERE id = (?)""", (0, user_id))
+            cls.conn.commit()
+            return
+        cls.c.execute("""UPDATE vmeste
+            SET first_fail = (?)
+            WHERE id = (?)""", (0, user_id))
         cls.conn.commit()
